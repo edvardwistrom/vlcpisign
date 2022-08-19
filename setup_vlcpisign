@@ -1,0 +1,120 @@
+#! /bin/bash
+# 
+# A simple guide on HowTo: Create a Digital signage solution with Raspberry Pi and VLC.
+# Media with MP4 files on USB memory stick will generate a playlist that is autostarted by the script.
+#
+######################################
+# Author: Edvard Wiström
+# edvard.wistrom@gmail.com
+# Aug 19 2022
+######################################
+#
+# Steps:
+# OS Install and Setup of Rasberry Pi.
+# Recommended to use Raspberry pi Imager, with the hidden feature to Advanced settings (Ctrl+Shift+X) and enable SSH login in the image.
+# Alternative hook up keyboard and mouse for initial configuration
+#
+# Activate SSH
+sudo systemctl enable ssh
+sudo systemctl start ssh
+
+# Activate VNCserver
+sudo systemctl enable vncsever-x11-serviced.service
+sudo systemctl start vncsever-x11-serviced.service
+
+# Refresh OS
+sudo apt update
+sudo apt upgrade
+
+# Network hardening with ufw firewall
+sudo apt-get install ufw
+#
+# Allow SSH connections
+sudo ufw allow 22
+#
+# Allow VNC connections
+sudo ufw allow 5900
+#
+# Start your ufw firewall
+sudo ufw enable
+#
+# Check new fw rules
+sudo ufw status numbered
+#
+# Remember to port-forward same ports in your hardware firewall if used via an external access. 
+#
+######################################
+## Set manually the GUI settings:
+# Set a black background, no icons and auto hide menubar, menubar size 0 when minimized.
+# Layout No image
+# Colour BLACK
+# No Documents/Wastebasket/Mounted Disks
+
+# Display / Screen Blanking Disable
+# Splash Screen Disable
+# Hide pointer at startup
+sudo sed -i -- "s/#xserver-command=X/xserver-command=X -nocursor/" /etc/lightdm/lightdm.conf
+#
+# Un-hide pointer
+# sudo sed -i -- "s/xserver-command=X -nocursor/#xserver-command=X -nocursor/" /etc/lightdm/lightdm.conf
+#
+###################################### 
+# Change in autostart to run your startscript:
+sudo echo '@bash /usr/local/bin/startscript &' >> /etc/xdg/lxsession/LXDE-pi/autostart
+#
+# Alternative
+# sudo nano /etc/xdg/lxsession/LXDE-pi/autostart
+# Add bash command line
+# @bash /usr/local/bin/startscript &
+#
+# Create script file:
+sudo touch /usr/local/bin/startscript
+#
+# change file permissions: Screen Disable
+# Hide pointer at startup
+sudo sed -i -- "s/#xserver-command=X/xserver-command=X -nocursor/" /etc/lightdm/lightdm.conf
+#
+# Un-hide pointer
+# sudo sed -i -- "s/xserver-command=X -nocursor/#xserver-command=X -nocursor/" /etc/lightdm/lightdm.conf
+#
+###################################### 
+# Change in autostart to run your startscript:
+sudo echo '@bash /usr/local/bin/startscript &' >> /etc/xdg/lxsession/LXDE-pi/autostart
+#
+# Alternative
+# sudo nano /etc/xdg/lxsession/LXDE-pi/autostart
+# Add bash command line
+# @bash /usr/local/bin/startscript &
+#
+# Create script file:
+sudo touch /usr/local/bin/startscript
+#
+# change file permissions:
+sudo chmod +x /usr/local/bin/startscript
+#
+sudo tee /usr/local/bin/startscript << END
+#!/bin/bash
+sleep 5
+find /media -type f -path '*.mp4' -not -path '*/\.*' | sort > ~/playlist.m3u &
+s
+sudo chmod +x /usr/local/bin/startscript
+#
+sudo tee /usr/local/bin/startscript << END
+#!/bin/bash
+sleep 5
+find /media -type f -path '*.mp4' -not -path '*/\.*' | sort > ~/playlist.m3u &
+sleep 5
+cvlc -q -Irc ~/playlist.m3u --fullscreen --loop --video-on-top --qt-minimal-view --no-video-title-show 2> /dev/null &
+END
+ 
+# restart Raspberry pi:                
+sudo reboot
+
+#
+# An USB stick containing some MP4 movies will now at startup be scanned to find all MP4-files.
+### A playlist.m3u is then created and that playlist is started by the script.
+# Playlist is sorted by full filename, so typically Folder names and/or numerical prefix of filename will be reflected in the playlist.
+
+
+
+
